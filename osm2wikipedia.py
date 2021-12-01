@@ -402,14 +402,16 @@ class osm2wikipedia:
         markers_layer = markers_ds.CreateLayer("markers", geom_type=ogr.wkbPoint)
         markers_layer.CreateField(ogr.FieldDefn("name_loc", ogr.OFTString))
         markers_layer.CreateField(ogr.FieldDefn("name_int", ogr.OFTString))
-        markers_layer.CreateField(ogr.FieldDefn("start_date", ogr.OFTString))
-        markers_layer.CreateField(ogr.FieldDefn("end_date", ogr.OFTString))
+        markers_layer.CreateField(ogr.FieldDefn("start_date", ogr.OFTDate))
+        markers_layer.CreateField(ogr.FieldDefn("end_date", ogr.OFTDate))
         featureDefn = markers_layer.GetLayerDefn()
         feature = ogr.Feature(featureDefn)
         #feature.SetGeometry(ogr.CreateGeometryFromWkt('POINT (37.666 55.666)'))
         feature.SetGeometry(centroid)
         feature.SetField("name_loc", 'Маркер. Сдвиньте и переименуйте')
         feature.SetField("name_int", 'Marker. Move and rename')
+        feature.SetField("start_date", '1800-01-01')
+        feature.SetField("end_date", '2222-01-01')
         markers_layer.CreateFeature(feature)
         del feature
         del markers_layer
