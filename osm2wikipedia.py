@@ -262,9 +262,19 @@ class osm2wikipedia:
         ds = gdal.OpenEx(filepath, gdal.OF_READONLY)#, allowed_drivers=['osm'])      
         assert ds is not None
         
+        layer_pbf = ds.GetLayer('multilinestrings')
+        try: 
+            feat = layer_pbf.GetNextFeature()
+        except: 
+            ValueError('pbf file is valid, but no line features found. Download more area in pbf.')       
+            return
         layer_pbf = ds.GetLayer('multipolygons')
-        feat = layer_pbf.GetNextFeature()
-        assert feat is not None
+        try: 
+            feat = layer_pbf.GetNextFeature()
+        except:
+            ValueError('pbf file is valid, but no multipolygons features found. Download more area in pbf.')
+            return
+        
 
         # Background layer generation
         ring = ogr.Geometry(ogr.wkbLinearRing)
@@ -311,8 +321,8 @@ class osm2wikipedia:
         layer_pbf.ResetReading()
         memory_layer = ds_mem.CopyLayer(layer_pbf,'water-polygons')
         assert memory_layer is not None
-        assert memory_layer.GetFeatureCount()>0
-        assert memory_layer.GetFeatureCount()>0
+        #assert memory_layer.GetFeatureCount()>0
+        #assert memory_layer.GetFeatureCount()>0
         memory_layer.CreateField(ogr.FieldDefn("area", ogr.OFTReal))
         defn = memory_layer.GetLayerDefn()
 
@@ -375,7 +385,7 @@ class osm2wikipedia:
             
         layer_pbf.SetAttributeFilter("railway = 'rail' and service not in ('siding','yard','spur')")
         layer_pbf.ResetReading()
-        layer_filename = os.path.join(result_files_dir,'hrailways_major.geojson')
+        layer_filename = os.path.join(result_files_dir,'railways_major.geojson')
         self.copy_layer2file('GeoJSON',ds, layer_pbf, 'railways', layer_filename)
         qgis_layer = QgsVectorLayer(layer_filename, "Railways major", "ogr")
         if qgis_layer.isValid():  
@@ -392,6 +402,8 @@ class osm2wikipedia:
         markers_layer = markers_ds.CreateLayer("markers", geom_type=ogr.wkbPoint)
         markers_layer.CreateField(ogr.FieldDefn("name_loc", ogr.OFTString))
         markers_layer.CreateField(ogr.FieldDefn("name_int", ogr.OFTString))
+        markers_layer.CreateField(ogr.FieldDefn("start_date", ogr.OFTString))
+        markers_layer.CreateField(ogr.FieldDefn("end_date", ogr.OFTString))
         featureDefn = markers_layer.GetLayerDefn()
         feature = ogr.Feature(featureDefn)
         #feature.SetGeometry(ogr.CreateGeometryFromWkt('POINT (37.666 55.666)'))
