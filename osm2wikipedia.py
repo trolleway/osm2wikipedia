@@ -35,6 +35,8 @@ import os.path
 
 from osgeo import ogr, gdal, osr
 import datetime
+import dateutil.parser
+
 
 
 class osm2wikipedia:
@@ -201,6 +203,56 @@ class osm2wikipedia:
         output_data_source = out_driver.CreateDataSource(filename)
         
         dest_layer = output_data_source.CopyLayer(input_layer,layername)
+        
+        #def cloneFieldDefn(src_def):
+        #    fdef = ogr.FieldDefn(src_fd.GetName(), src_fd.GetType())
+        #    fdef.SetWidth(src_fd.GetWidth())
+        #    fdef.SetPrecision(src_fd.GetPrecision())
+        #    return fdef
+        
+        #cast start_date field to DATE type
+        fieldname = 'start_date'
+        layerdef = dest_layer.GetLayerDefn()
+        new_field = dest_layer.CreateField(ogr.FieldDefn(fieldname+"_date", ogr.OFTDate))
+        
+        for feature in dest_layer:
+            input_date = feature.GetField(fieldname)
+            if input_date is not None:
+                try:
+                    normalized_date = dateutil.parser.parse(input_date)
+                except:
+                    feature.SetField(fieldname+'_date',None)
+                    dest_layer.SetFeature(feature)
+                    continue
+                date_string = normalized_date.isoformat()
+                feature.SetField(fieldname+'_date',date_string)
+                dest_layer.SetFeature(feature)
+            
+        fieldname = 'end_date'
+        layerdef = dest_layer.GetLayerDefn()
+        new_field = dest_layer.CreateField(ogr.FieldDefn(fieldname+"_date", ogr.OFTDate))
+        
+        for feature in dest_layer:
+            input_date = feature.GetField(fieldname)
+            if input_date is not None:
+                try:
+                    normalized_date = dateutil.parser.parse(input_date)
+                except:
+                    feature.SetField(fieldname+'_date',None)
+                    dest_layer.SetFeature(feature)
+                    continue
+                date_string = normalized_date.isoformat()
+                feature.SetField(fieldname+'_date',date_string)
+                dest_layer.SetFeature(feature)
+        
+        #i = layerdef.GetFieldIndex(fieldname)
+        #src_fd = layerdef.GetFieldDefn(layerdef.GetFieldIndex(fieldname))
+        #fdef = cloneFieldDefn(src_fd)
+        #fdef.SetName(fieldname+"_date")
+        #fdef.SetType(ogr.OFTDate)
+        #dest_layer.AlterFieldDefn(i, fdef, (ogr.ALTER_NAME_FLAG | ogr.ALTER_TYPE_FLAG | ogr.ALTER_WIDTH_PRECISION_FLAG))
+    
+    
         if drivername == 'ESRI Shapefile':
             with open(filename.replace('.shp','.cpg'), 'w') as f:
                 f.write('UTF-8')
@@ -321,8 +373,6 @@ class osm2wikipedia:
         layer_pbf.ResetReading()
         memory_layer = ds_mem.CopyLayer(layer_pbf,'water-polygons')
         assert memory_layer is not None
-        #assert memory_layer.GetFeatureCount()>0
-        #assert memory_layer.GetFeatureCount()>0
         memory_layer.CreateField(ogr.FieldDefn("area", ogr.OFTReal))
         defn = memory_layer.GetLayerDefn()
 
@@ -333,11 +383,10 @@ class osm2wikipedia:
         
             geom = feature.GetGeometryRef()
             feature.SetField('area',round(self.calc_area(feature.GetGeometryRef().ExportToWkb())/100000,2))
-            #feature.SetField('name','чурка')
             memory_layer.SetFeature(feature)
             feature = None
-        layer_filename = os.path.join(result_files_dir,'water-polygons.geojson')
-        self.copy_layer2file('GeoJSON',ds_mem, memory_layer, 'water-polygons', layer_filename)
+        layer_filename = os.path.join(result_files_dir,'water-polygons.gpkg')
+        self.copy_layer2file('GPKG',ds_mem, memory_layer, 'water-polygons', layer_filename)
         qgis_layer = QgsVectorLayer(layer_filename, "water", "ogr")
         if qgis_layer.isValid():  
             qgis_loaded_layer = QgsProject.instance().addMapLayer(qgis_layer)
@@ -348,8 +397,8 @@ class osm2wikipedia:
         
         layer_pbf.SetAttributeFilter("landuse in ('residential','industrial','commercial','retail')")
         layer_pbf.ResetReading()
-        layer_filename = os.path.join(result_files_dir,'build area.geojson')
-        self.copy_layer2file('GeoJSON',ds, layer_pbf, 'build area', layer_filename)
+        layer_filename = os.path.join(result_files_dir,'build area.gpkg')
+        self.copy_layer2file('GPKG',ds, layer_pbf, 'build area', layer_filename)
         qgis_layer = QgsVectorLayer(layer_filename, "Build area", "ogr")
         if qgis_layer.isValid():  
             qgis_loaded_layer = QgsProject.instance().addMapLayer(qgis_layer)
@@ -364,8 +413,8 @@ class osm2wikipedia:
         
         layer_pbf.SetAttributeFilter("highway IS NOT NULL AND highway NOT IN ( 'track','service','footway','path')")
         layer_pbf.ResetReading()
-        layer_filename = os.path.join(result_files_dir,'highways_filtered.geojson')
-        self.copy_layer2file('GeoJSON',ds, layer_pbf, 'highways', layer_filename)
+        layer_filename = os.path.join(result_files_dir,'highways_filtered.gpkg')
+        self.copy_layer2file('GPKG',ds, layer_pbf, 'highways', layer_filename)
         qgis_layer = QgsVectorLayer(layer_filename, "Highways", "ogr")
         if qgis_layer.isValid():  
             qgis_loaded_layer = QgsProject.instance().addMapLayer(qgis_layer)
@@ -385,8 +434,8 @@ class osm2wikipedia:
             
         layer_pbf.SetAttributeFilter("railway = 'rail' and service not in ('siding','yard','spur')")
         layer_pbf.ResetReading()
-        layer_filename = os.path.join(result_files_dir,'railways_major.geojson')
-        self.copy_layer2file('GeoJSON',ds, layer_pbf, 'railways', layer_filename)
+        layer_filename = os.path.join(result_files_dir,'railways_major.gpkg')
+        self.copy_layer2file('GPKG',ds, layer_pbf, 'railways', layer_filename)
         qgis_layer = QgsVectorLayer(layer_filename, "Railways major", "ogr")
         if qgis_layer.isValid():  
             qgis_loaded_layer = QgsProject.instance().addMapLayer(qgis_layer)
