@@ -404,13 +404,11 @@ class osm2wikipedia:
             qgis_loaded_layer = QgsProject.instance().addMapLayer(qgis_layer)
             qgis_loaded_layer.loadNamedStyle(os.path.join(self.plugin_dir,'styles','build area.qml'))   
         
+        #highways
         layer_pbf = ds.GetLayer('lines')
         feat = layer_pbf.GetNextFeature()
         assert feat is not None
 
-
-        #layer = ds_mem.CopyLayer(ds.GetLayer('lines'),'lines',['OVERWRITE=YES'])
-        
         layer_pbf.SetAttributeFilter("highway IS NOT NULL AND highway NOT IN ( 'track','service','footway','path')")
         layer_pbf.ResetReading()
         layer_filename = os.path.join(result_files_dir,'highways_filtered.gpkg')
@@ -443,6 +441,20 @@ class osm2wikipedia:
         del qgis_layer
         del layer_filename
         
+        #places layer
+        layer_pbf = ds.GetLayer('points')
+        layer_pbf.SetAttributeFilter("place is not null")
+        featurecount = layer_pbf.GetFeatureCount()
+        layer_pbf.ResetReading()
+        #if featurecount > 0:
+        layer_filename = os.path.join(result_files_dir,'places.gpkg')
+        self.copy_layer2file('GPKG',ds, layer_pbf, 'places', layer_filename)
+        qgis_layer = QgsVectorLayer(layer_filename, "Places", "ogr")
+        if qgis_layer.isValid():  
+            qgis_loaded_layer = QgsProject.instance().addMapLayer(qgis_layer)
+            qgis_loaded_layer.loadNamedStyle(os.path.join(self.plugin_dir,'styles','places.qml'))   
+        
+
         #markers layer
                 
         layer_filename = os.path.join(result_files_dir,'markers.geojson')
