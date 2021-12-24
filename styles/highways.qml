@@ -126,8 +126,8 @@
           <prop k="joinstyle" v="bevel"/>
           <prop k="line_color" v="91,91,91,255"/>
           <prop k="line_style" v="solid"/>
-          <prop k="line_width" v="0.86"/>
-          <prop k="line_width_unit" v="MM"/>
+          <prop k="line_width" v="3"/>
+          <prop k="line_width_unit" v="Pixel"/>
           <prop k="offset" v="0"/>
           <prop k="offset_map_unit_scale" v="3x:0,0,0,0,0,0"/>
           <prop k="offset_unit" v="MM"/>
@@ -151,7 +151,7 @@
           <prop k="joinstyle" v="bevel"/>
           <prop k="line_color" v="255,228,0,255"/>
           <prop k="line_style" v="solid"/>
-          <prop k="line_width" v="2.4"/>
+          <prop k="line_width" v="2.2"/>
           <prop k="line_width_unit" v="Pixel"/>
           <prop k="offset" v="0"/>
           <prop k="offset_map_unit_scale" v="3x:0,0,0,0,0,0"/>
